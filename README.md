@@ -8,7 +8,7 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 
 ## Download
 
-👉 **[Download MicInput-Installer.exe](https://github.com/YOUR_USERNAME/micinput-vst/releases/latest)**
+👉 **[Download MicInput-Installer.exe](https://github.com/ariknel/micinput-vst/releases/latest)**
 
 ---
 
