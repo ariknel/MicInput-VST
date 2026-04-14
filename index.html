@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MicInput — Record Vocals Inside Your DAW</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #080a0f;
+    --surface: #111420;
+    --border:  rgba(255,255,255,0.07);
+    --accent:  #4f8ef7;
+    --accent2: #7fb3ff;
+    --red:     #ef4444;
+    --text:    #eef0f8;
+    --muted:   rgba(238,240,248,0.5);
+    --hint:    rgba(238,240,248,0.25);
+    --mono:    'Space Mono', monospace;
+    --sans:    'Syne', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow-x: hidden;
+  }
+
+  /* grain */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 999;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 60px;
+    background: rgba(8,10,15,0.9);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--text); text-decoration: none;
+  }
+  .logo-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--red); box-shadow: 0 0 8px var(--red);
+    animation: blink 2.5s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%,100% { opacity:1; box-shadow:0 0 8px var(--red); }
+    50%      { opacity:.4; box-shadow:0 0 2px var(--red); }
+  }
+  .nav-dl {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; text-decoration: none;
+    color: #fff; background: var(--accent);
+    padding: 8px 20px; border-radius: 4px;
+    transition: background .2s, box-shadow .2s;
+  }
+  .nav-dl:hover { background: var(--accent2); box-shadow: 0 0 20px rgba(79,142,247,.4); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 120px 24px 80px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute; top: 40%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 700px; height: 400px;
+    background: radial-gradient(ellipse, rgba(79,142,247,.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: .2em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 28px;
+    display: flex; align-items: center; gap: 12px;
+    animation: fadeUp .5s ease both;
+  }
+  .hero-tag::before, .hero-tag::after {
+    content: ''; display: block; width: 28px; height: 1px;
+    background: var(--accent); opacity: .5;
+  }
+  h1 {
+    font-size: clamp(52px, 10vw, 108px);
+    font-weight: 800; line-height: .9; letter-spacing: -.03em;
+    margin-bottom: 32px; position: relative; z-index: 1;
+    animation: fadeUp .5s .08s ease both;
+  }
+  .outline { color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,.2); }
+  .hero-sub {
+    font-family: var(--mono); font-size: 14px; line-height: 1.8;
+    color: var(--muted); max-width: 440px; margin: 0 auto 48px;
+    position: relative; z-index: 1;
+    animation: fadeUp .5s .16s ease both;
+  }
+  .hero-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 16px 40px;
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; text-decoration: none;
+    color: #fff; background: var(--accent); border-radius: 4px;
+    box-shadow: 0 0 40px rgba(79,142,247,.3);
+    transition: all .2s; position: relative; z-index: 1;
+    animation: fadeUp .5s .24s ease both;
+  }
+  .hero-btn:hover {
+    background: var(--accent2); transform: translateY(-2px);
+    box-shadow: 0 0 60px rgba(79,142,247,.45);
+  }
+  .hero-btn svg { width: 15px; height: 15px; }
+  .hero-meta {
+    margin-top: 20px; font-family: var(--mono); font-size: 11px;
+    color: var(--hint); position: relative; z-index: 1;
+    animation: fadeUp .5s .3s ease both;
+  }
+
+  /* Waveform bottom decoration */
+  .hero-wave {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 120px; opacity: .05; pointer-events: none;
+  }
+
+  /* VIDEO */
+  .video-section {
+    padding: 40px 48px 100px;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  .video-label {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--hint);
+  }
+  .video-frame {
+    width: 100%; max-width: 820px;
+    aspect-ratio: 16/9;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; position: relative;
+    box-shadow: 0 40px 80px rgba(0,0,0,.6);
+  }
+  /* Drop your iframe or video tag here */
+  .video-frame iframe,
+  .video-frame video {
+    width: 100%; height: 100%; border: none; display: block;
+  }
+  /* Placeholder shown until you add a real video */
+  .video-placeholder {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    background: linear-gradient(135deg, #0e1220, #111828);
+  }
+  .play-btn {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(79,142,247,.15);
+    border: 1.5px solid rgba(79,142,247,.35);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .2s;
+  }
+  .play-btn:hover { background: rgba(79,142,247,.25); transform: scale(1.05); }
+  .play-btn svg { color: var(--accent2); margin-left: 4px; }
+  .video-placeholder p {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--hint); letter-spacing: .1em; text-transform: uppercase;
+  }
+
+  /* FEATURES — 3 simple cards */
+  .features {
+    padding: 60px 48px 80px;
+    max-width: 960px; margin: 0 auto;
+  }
+  .feat-grid {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 2px;
+  }
+  .feat-card {
+    background: var(--surface); padding: 36px 28px;
+    border: 1px solid var(--border);
+    transition: border-color .2s;
+  }
+  .feat-card:hover { border-color: rgba(79,142,247,.2); }
+  .feat-icon {
+    font-size: 28px; margin-bottom: 18px; display: block;
+  }
+  .feat-title {
+    font-size: 16px; font-weight: 700; margin-bottom: 10px;
+  }
+  .feat-desc {
+    font-family: var(--mono); font-size: 11px;
+    line-height: 1.8; color: var(--muted);
+  }
+
+  /* HOW */
+  .how { padding: 80px 48px; max-width: 700px; margin: 0 auto; }
+  .section-tag {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--accent);
+    margin-bottom: 48px; display: flex; align-items: center; gap: 12px;
+  }
+  .section-tag::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .steps { display: flex; flex-direction: column; }
+  .step {
+    display: grid; grid-template-columns: 48px 1fr; gap: 20px;
+    padding: 28px 0; border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-n {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    padding-top: 3px; font-weight: 700;
+  }
+  .step-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .step-desc {
+    font-family: var(--mono); font-size: 11px;
+    line-height: 1.8; color: var(--muted);
+  }
+
+  /* CTA */
+  .cta {
+    padding: 120px 48px; text-align: center;
+    border-top: 1px solid var(--border); position: relative; overflow: hidden;
+  }
+  .cta::before {
+    content:''; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(79,142,247,.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta h2 {
+    font-size: clamp(36px, 6vw, 68px); font-weight: 800;
+    letter-spacing: -.02em; margin-bottom: 12px;
+  }
+  .cta p {
+    font-family: var(--mono); font-size: 13px;
+    color: var(--muted); margin-bottom: 44px;
+  }
+  .req {
+    margin-top: 40px; display: flex; justify-content: center;
+    gap: 28px; flex-wrap: wrap;
+  }
+  .req span {
+    font-family: var(--mono); font-size: 11px; color: var(--hint);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .req span::before {
+    content:''; width:4px; height:4px; border-radius:50%;
+    background:var(--accent); opacity:.4; display:block;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 28px 48px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer p { font-family: var(--mono); font-size: 11px; color: var(--hint); }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--hint); text-decoration: none; transition: color .2s;
+  }
+  .footer-links a:hover { color: var(--muted); }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  @media(max-width:720px){
+    nav { padding: 0 20px; }
+    .hero { padding: 100px 20px 60px; }
+    .video-section { padding: 20px 20px 60px; }
+    .features { padding: 40px 20px 60px; }
+    .feat-grid { grid-template-columns: 1fr; }
+    .how { padding: 60px 20px; }
+    .cta { padding: 80px 20px; }
+    footer { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <span class="logo-dot"></span>
+    MicInput
+  </a>
+  <a class="nav-dl" href="https://github.com/YOUR_USERNAME/micinput-vst/releases/latest/download/MicInput-Installer.exe">
+    Download
+  </a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+
+  <div class="hero-tag">Free VST3 Plugin · Windows</div>
+
+  <h1>
+    <span>Record</span><br>
+    <span class="outline">vocals</span><br>
+    <span>in your DAW.</span>
+  </h1>
+
+  <p class="hero-sub">
+    MicInput captures your mic directly inside Bitwig, Ableton, FL Studio or Reaper — and saves every take automatically so nothing gets lost.
+  </p>
+
+  <a class="hero-btn"
+     href="https://github.com/YOUR_USERNAME/micinput-vst/releases/latest/download/MicInput-Installer.exe">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1"/>
+    </svg>
+    Download Free · v1.0.0
+  </a>
+
+  <p class="hero-meta">Windows 10 / 11 &nbsp;·&nbsp; All major DAWs &nbsp;·&nbsp; No account needed</p>
+
+  <svg class="hero-wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
+    <polyline fill="none" stroke="white" stroke-width="1.5"
+      points="0,60 30,40 60,80 90,30 120,85 150,25 180,70 210,45 240,80 270,35 300,65 330,50 360,75 390,30 420,70 450,55 480,80 510,40 540,65 570,85 600,35 630,70 660,45 690,80 720,30 750,65 780,50 810,75 840,35 870,65 900,45 930,80 960,30 990,70 1020,50 1050,80 1080,40 1110,65 1140,85 1170,35 1200,70 1230,50 1260,75 1290,40 1320,65 1350,80 1380,45 1440,60"/>
+  </svg>
+</section>
+
+<!-- VIDEO -->
+<section class="video-section">
+  <p class="video-label">See it in action</p>
+  <div class="video-frame">
+    <!--
+      REPLACE THIS COMMENT with either:
+
+      YouTube embed:
+      <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" allowfullscreen></iframe>
+
+      Or a local video file:
+      <video src="demo.mp4" controls poster="thumb.jpg"></video>
+    -->
+    <div class="video-placeholder">
+      <div class="play-btn">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+      <p>Demo video coming soon</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="feat-grid">
+
+    <div class="feat-card">
+      <span class="feat-icon">🎙️</span>
+      <div class="feat-title">Never lose a take</div>
+      <div class="feat-desc">
+        Auto-save records your mic every time your DAW records. Press play — MicInput captures automatically. Every idea saved, every time.
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <span class="feat-icon">📝</span>
+      <div class="feat-title">Automatic transcription</div>
+      <div class="feat-desc">
+        Click Transcribe on any take and Whisper AI turns it into text — locally on your machine, no internet required. Great for quickly reviewing what you freestyled.
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <span class="feat-icon">📁</span>
+      <div class="feat-title">Organised by session</div>
+      <div class="feat-desc">
+        Create folders inside the plugin to group takes by song or session. Drag takes to your DAW timeline instantly when you find a keeper.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="how">
+  <div class="section-tag">How to get started</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">01</div>
+      <div>
+        <div class="step-title">Install</div>
+        <div class="step-desc">Run the installer, click through the wizard. It drops the plugin into your VST3 folder automatically.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">02</div>
+      <div>
+        <div class="step-title">Add to a track</div>
+        <div class="step-desc">In your DAW, add MicInput as an instrument on any track. Select your microphone from the dropdown at the top.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">03</div>
+      <div>
+        <div class="step-title">Turn on Auto-save</div>
+        <div class="step-desc">Hit the Auto-save toggle in the Takes tab. Now every time you hit record in your DAW, your mic is captured automatically.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">04</div>
+      <div>
+        <div class="step-title">Find your best take</div>
+        <div class="step-desc">Browse takes in the plugin, run transcription to read what you recorded, then drag the keeper straight to your DAW timeline.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <h2>Free. Forever.</h2>
+  <p>No subscription. No login. No cloud. Just install and record.</p>
+  <a class="hero-btn"
+     href="https://github.com/YOUR_USERNAME/micinput-vst/releases/latest/download/MicInput-Installer.exe">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+      <path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1"/>
+    </svg>
+    Download MicInput — Windows
+  </a>
+  <div class="req">
+    <span>Windows 10 or 11</span>
+    <span>Bitwig · Ableton · FL Studio · Reaper</span>
+    <span>Any USB or interface mic</span>
+  </div>
+</section>
+
+<footer>
+  <p>© 2024 MicInput · Free & open source</p>
+  <div class="footer-links">
+    <a href="https://github.com/YOUR_USERNAME/micinput-vst" target="_blank">GitHub</a>
+    <a href="https://github.com/YOUR_USERNAME/micinput-vst/releases" target="_blank">Releases</a>
+    <a href="https://github.com/YOUR_USERNAME/micinput-vst/issues" target="_blank">Report a bug</a>
+  </div>
+</footer>
+
+</body>
+</html>
