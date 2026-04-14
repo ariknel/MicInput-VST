@@ -1,5 +1,5 @@
 # MicInput VST3
-**[Webpage]https://ariknel.github.io/MicInput-VST/**
+Webpage https://ariknel.github.io/MicInput-VST/**
 A microphone capture plugin for Windows DAWs. Record takes directly inside the plugin — with automatic save, folder management, Whisper AI transcription, pitch detection, and waveform previews.
 
 Built for rappers, producers, and vocalists who want a dedicated recording workflow inside Bitwig, Ableton, FL Studio, or Reaper.
