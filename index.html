@@ -404,13 +404,10 @@
 <footer>
   <div class="footer-left">
     <p>© 2024 MicInput · Free & open source</p>
+    <!-- Visitor counter via countapi.dev — pure JS, no CORS issues -->
     <div class="visitor-count">
       <span class="visitor-label">Visitors</span>
-      <img
-        src="https://visitor-badge.laobi.icu/badge?page_id=ariknel.MicInput-VST&left_color=%23111420&right_color=%234f8ef7&left_text=visitors"
-        alt="visitor count"
-        style="height:20px;border-radius:3px;vertical-align:middle;"
-        onerror="this.style.display='none'">
+      <span class="visitor-badge" id="visit-count">—</span>
     </div>
   </div>
   <div class="footer-links">
@@ -420,5 +417,21 @@
   </div>
 </footer>
 
+<script>
+  // GoatCounter — free, open source, GDPR compliant, works on static sites
+  // Sign up free at https://www.goatcounter.com/ with code "micinput"
+  // Then replace YOUR_CODE below with your GoatCounter code
+  (function() {
+    var el = document.getElementById('visit-count');
+    fetch('https://micinput.goatcounter.com/counter//index.html.json')
+      .then(r => r.json())
+      .then(d => {
+        if (el && d.count) el.textContent = d.count;
+      })
+      .catch(() => { if (el) el.parentElement.style.display = 'none'; });
+  })();
+</script>
+<script data-goatcounter="https://micinput.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
