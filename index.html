@@ -31,7 +31,6 @@
     overflow-x: hidden;
   }
 
-  /* grain */
   body::after {
     content: '';
     position: fixed; inset: 0;
@@ -39,7 +38,6 @@
     pointer-events: none; z-index: 999;
   }
 
-  /* NAV */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
@@ -71,7 +69,6 @@
   }
   .nav-dl:hover { background: var(--accent2); box-shadow: 0 0 20px rgba(79,142,247,.4); }
 
-  /* HERO */
   .hero {
     min-height: 100vh;
     display: flex; flex-direction: column;
@@ -130,14 +127,11 @@
     color: var(--hint); position: relative; z-index: 1;
     animation: fadeUp .5s .3s ease both;
   }
-
-  /* Waveform bottom decoration */
   .hero-wave {
     position: absolute; bottom: 0; left: 0; right: 0;
     height: 120px; opacity: .05; pointer-events: none;
   }
 
-  /* VIDEO */
   .video-section {
     padding: 40px 48px 100px;
     display: flex; flex-direction: column; align-items: center; gap: 20px;
@@ -158,7 +152,6 @@
     width: 100%; height: 100%; border: none; display: block;
   }
 
-  /* FEATURES */
   .features {
     padding: 60px 48px 80px;
     max-width: 960px; margin: 0 auto;
@@ -168,22 +161,16 @@
   }
   .feat-card {
     background: var(--surface); padding: 36px 28px;
-    border: 1px solid var(--border);
-    transition: border-color .2s;
+    border: 1px solid var(--border); transition: border-color .2s;
   }
   .feat-card:hover { border-color: rgba(79,142,247,.2); }
-  .feat-icon {
-    font-size: 28px; margin-bottom: 18px; display: block;
-  }
-  .feat-title {
-    font-size: 16px; font-weight: 700; margin-bottom: 10px;
-  }
+  .feat-icon { font-size: 28px; margin-bottom: 18px; display: block; }
+  .feat-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
   .feat-desc {
     font-family: var(--mono); font-size: 11px;
     line-height: 1.8; color: var(--muted);
   }
 
-  /* HOW */
   .how { padding: 80px 48px; max-width: 700px; margin: 0 auto; }
   .section-tag {
     font-family: var(--mono); font-size: 10px;
@@ -191,7 +178,6 @@
     margin-bottom: 48px; display: flex; align-items: center; gap: 12px;
   }
   .section-tag::after { content:''; flex:1; height:1px; background:var(--border); }
-
   .steps { display: flex; flex-direction: column; }
   .step {
     display: grid; grid-template-columns: 48px 1fr; gap: 20px;
@@ -208,7 +194,6 @@
     line-height: 1.8; color: var(--muted);
   }
 
-  /* CTA */
   .cta {
     padding: 120px 48px; text-align: center;
     border-top: 1px solid var(--border); position: relative; overflow: hidden;
@@ -241,14 +226,34 @@
     background:var(--accent); opacity:.4; display:block;
   }
 
-  /* FOOTER */
   footer {
     padding: 28px 48px; border-top: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 12px;
+    flex-wrap: wrap; gap: 16px;
   }
+  .footer-left { display: flex; flex-direction: column; gap: 10px; }
   footer p { font-family: var(--mono); font-size: 11px; color: var(--hint); }
-  .footer-links { display: flex; gap: 24px; }
+
+  /* Visitor counter */
+  .visitor-count {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .visitor-label {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--hint);
+  }
+  .visitor-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 3px; padding: 3px 10px;
+    font-family: var(--mono); font-size: 11px; color: var(--accent2);
+  }
+  .visitor-badge::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent); display: block;
+  }
+
+  .footer-links { display: flex; gap: 24px; align-self: flex-end; }
   .footer-links a {
     font-family: var(--mono); font-size: 11px;
     color: var(--hint); text-decoration: none; transition: color .2s;
@@ -286,29 +291,22 @@
 
 <section class="hero">
   <div class="hero-glow"></div>
-
   <div class="hero-tag">Free VST3 Plugin · Windows</div>
-
   <h1>
     <span>Record</span><br>
     <span class="outline">vocals</span><br>
     <span>in your DAW.</span>
   </h1>
-
   <p class="hero-sub">
     MicInput captures your mic directly inside Bitwig, Ableton, FL Studio or Reaper — and saves every take automatically so nothing gets lost.
   </p>
-
-  <a class="hero-btn"
-     href="https://github.com/ariknel/MicInput-VST/releases/download/Installation_Wizard/MicInput-Installer.exe">
+  <a class="hero-btn" href="https://github.com/ariknel/MicInput-VST/releases/download/Installation_Wizard/MicInput-Installer.exe">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1"/>
     </svg>
     Download Free · v1.0.0
   </a>
-
   <p class="hero-meta">Windows 10 / 11 &nbsp;·&nbsp; All major DAWs &nbsp;·&nbsp; No account needed</p>
-
   <svg class="hero-wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
     <polyline fill="none" stroke="white" stroke-width="1.5"
       points="0,60 30,40 60,80 90,30 120,85 150,25 180,70 210,45 240,80 270,35 300,65 330,50 360,75 390,30 420,70 450,55 480,80 510,40 540,65 570,85 600,35 630,70 660,45 690,80 720,30 750,65 780,50 810,75 840,35 870,65 900,45 930,80 960,30 990,70 1020,50 1050,80 1080,40 1110,65 1140,85 1170,35 1200,70 1230,50 1260,75 1290,40 1320,65 1350,80 1380,45 1440,60"/>
@@ -318,10 +316,10 @@
 <section class="video-section">
   <p class="video-label">See it in action</p>
   <div class="video-frame">
-    <iframe 
-      src="https://www.youtube.com/embed/IHmMTpHhaPQ" 
-      title="MicInput Demo" 
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+    <iframe
+      src="https://www.youtube.com/embed/IHmMTpHhaPQ"
+      title="MicInput Demo"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowfullscreen>
     </iframe>
   </div>
@@ -329,7 +327,6 @@
 
 <section class="features">
   <div class="feat-grid">
-
     <div class="feat-card">
       <span class="feat-icon">🎙️</span>
       <div class="feat-title">Never lose a take</div>
@@ -337,7 +334,6 @@
         Auto-save records your mic every time your DAW records. Press play — MicInput captures automatically. Every idea saved, every time.
       </div>
     </div>
-
     <div class="feat-card">
       <span class="feat-icon">📝</span>
       <div class="feat-title">Automatic transcription</div>
@@ -345,7 +341,6 @@
         Click Transcribe on any take and Whisper AI turns it into text — locally on your machine, no internet required. Great for quickly reviewing what you freestyled.
       </div>
     </div>
-
     <div class="feat-card">
       <span class="feat-icon">📁</span>
       <div class="feat-title">Organised by session</div>
@@ -353,7 +348,6 @@
         Create folders inside the plugin to group takes by song or session. Drag takes to your DAW timeline instantly when you find a keeper.
       </div>
     </div>
-
   </div>
 </section>
 
@@ -394,8 +388,7 @@
 <section class="cta">
   <h2>Free. Forever.</h2>
   <p>No subscription. No login. No cloud. Just install and record.</p>
-  <a class="hero-btn"
-     href="https://github.com/ariknel/MicInput-VST/releases/download/Installation_Wizard/MicInput-Installer.exe">
+  <a class="hero-btn" href="https://github.com/ariknel/MicInput-VST/releases/download/Installation_Wizard/MicInput-Installer.exe">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
       <path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1"/>
     </svg>
@@ -409,11 +402,20 @@
 </section>
 
 <footer>
-  <p>© 2024 MicInput · Free & open source</p>
+  <div class="footer-left">
+    <p>© 2024 MicInput · Free & open source</p>
+    <div class="visitor-count">
+      <span class="visitor-label">Visitors</span>
+      <img
+        src="https://hits.sh/ariknel.github.io/MicInput-VST.svg?style=flat-square&color=4f8ef7&labelColor=111420&label=%20"
+        alt="visitor count"
+        style="height:20px;border-radius:3px;vertical-align:middle;">
+    </div>
+  </div>
   <div class="footer-links">
-    <a href="https://github.com/ariknel/micinput-vst" target="_blank">GitHub</a>
-    <a href="https://github.com/ariknel/micinput-vst" target="_blank">Releases</a>
-    <a href="https://github.com/ariknel/micinput-vst" target="_blank">Report a bug</a>
+    <a href="https://github.com/ariknel/MicInput-VST" target="_blank">GitHub</a>
+    <a href="https://github.com/ariknel/MicInput-VST/releases" target="_blank">Releases</a>
+    <a href="https://github.com/ariknel/MicInput-VST/issues" target="_blank">Report a bug</a>
   </div>
 </footer>
 
