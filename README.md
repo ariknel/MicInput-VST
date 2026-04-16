@@ -15,7 +15,7 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 
 ## Installation
 
-1. Download `MicInput-Installer.exe` from the link above
+1. Download `MicInput-Installer.exe` from one of the links above
 2. Double-click it and follow the wizard
 3. Default install path: `C:\Program Files\Common Files\VST3\`
 4. Open your DAW → rescan VST3 plugins → add **MicInput** to an Instrument Track
