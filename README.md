@@ -97,15 +97,9 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 
 ---
 
-## Building from Source
+## Building from Source using .bat
 
 Requires: Visual Studio 2022 Build Tools, CMake, Git, Ninja
-
-```bat
-git clone https://github.com/YOUR_USERNAME/micinput-vst.git
-cd micinput-vst
-build.bat
-```
 
 First build downloads JUCE (~120 MB) and whisper.cpp (~30 MB) automatically.
 
