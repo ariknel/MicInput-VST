@@ -107,12 +107,11 @@ build.bat
 First build downloads JUCE (~120 MB) and whisper.cpp (~30 MB) automatically.
 
 To build the installer (requires [Inno Setup 5](https://jrsoftware.org/isdl.php)):
-(installer included in release notes micinput-vst.zip)
 ```bat
 make_installer.bat
 ```
 
-Output: `dist\MicInput-Installer.exe`
+Output: `dist\MicInput-Installer.exe` (included in releases, not main (micinput-vst.zip))
 
 ---
 
