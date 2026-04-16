@@ -1,14 +1,13 @@
 # MicInput VST3
-Webpage **https://ariknel.github.io/MicInput-VST/**
-
 
 A microphone capture plugin for Windows DAWs. Record takes directly inside the plugin — with automatic save, folder management, Whisper AI transcription, pitch detection, and waveform previews.
 
 Built for rappers, producers, and vocalists who want a dedicated recording workflow inside Bitwig, Ableton, FL Studio, or Reaper.
-[![Watch the video](https://img.youtube.com/vi/IHmMTpHhaPQ/0.jpg)](https://www.youtube.com/watch?v=IHmMTpHhaPQ)
+
 ---
 
 ## Download
+
 👉 **[Download MicInput-Installer.exe](https://github.com/ariknel/micinput-vst/releases/latest)**
 
 ---
@@ -23,7 +22,6 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 ---
 
 ## Features
-<img width="655" height="628" alt="afbeelding" src="https://github.com/user-attachments/assets/c981ff4c-664c-470d-9f5f-f637ae994924" />
 
 **Recording**
 - Captures microphone audio via WASAPI at native sample rate
@@ -38,12 +36,10 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 - Drag takes into folders to organise sessions
 - Drag takes directly to DAW timeline
 - Inline rename, colour-coded live indicator
-<img width="665" height="644" alt="afbeelding" src="https://github.com/user-attachments/assets/2a2ee92b-7452-48e5-a6e9-0369371d9f00" />
 
 **Folders**
 - Create, rename, delete folders inside the plugin
 - Drag and drop takes between folders
-<img width="1207" height="681" alt="afbeelding" src="https://github.com/user-attachments/assets/47ca3f23-4fc8-4073-8511-2088032704c9" />
 
 **Transcription (Whisper AI)**
 - Local transcription — no internet required, no API key
@@ -97,9 +93,15 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 
 ---
 
-## Building from Source using .bat
+## Building from Source
 
 Requires: Visual Studio 2022 Build Tools, CMake, Git, Ninja
+
+```bat
+git clone https://github.com/YOUR_USERNAME/micinput-vst.git
+cd micinput-vst
+build.bat
+```
 
 First build downloads JUCE (~120 MB) and whisper.cpp (~30 MB) automatically.
 
