@@ -111,7 +111,7 @@ To build the installer (requires [Inno Setup 5](https://jrsoftware.org/isdl.php)
 make_installer.bat
 ```
 
-Output: `dist\MicInput-Installer.exe` (included in releases, not main (micinput-vst.zip))
+Output: `dist\MicInput-Installer.exe` 
 
 ---
 
