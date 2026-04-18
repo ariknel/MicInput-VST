@@ -25,7 +25,7 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 ## Features
 
 **Recording**
-<img width="100" height="100" alt="123" src="https://github.com/user-attachments/assets/1e0cd8b0-6736-4fd0-abfa-1befc7924099" />
+<img width="1585" height="967" alt="12848" src="https://github.com/user-attachments/assets/47ae90fa-2a7e-48ec-a2ae-8bfdc565f553" />
 - Captures microphone audio via WASAPI at native sample rate
 - Manual record button or auto-save when DAW starts recording
 - Loop record mode — each loop pass saved as a separate take automatically
@@ -45,6 +45,8 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 - Drag and drop takes between folders
 
 **Transcription (Whisper AI)**
+<img width="425" height="553" alt="123456" src="https://github.com/user-attachments/assets/dcf9d04c-5314-49b5-bd7f-09895cb7897e" />![Uploading 1234567.PNG…]()
+
 - Local transcription — no internet required, no API key
 - Five model sizes: Tiny (fast) to Large (accurate)
 - Word-level timestamps with alignment view in lyrics editor
@@ -52,6 +54,7 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 - Progress bar during transcription
 
 **Signal Chain**
+<img width="425" height="551" alt="1234" src="https://github.com/user-attachments/assets/2f971714-1c85-4a41-94f5-a4d677bf17f5" />
 - Input gain (0–2×) — automatable from DAW, maps to Capture dial
 - Noise gate with attack/release smoothing
 - Clip indicator with peak hold
