@@ -45,7 +45,7 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 - Drag and drop takes between folders
 
 **Transcription (Whisper AI)**
-<img width="425" height="553" alt="123456" src="https://github.com/user-attachments/assets/dcf9d04c-5314-49b5-bd7f-09895cb7897e" />![Uploading 1234567.PNG…]()
+<img width="425" height="553" alt="123456" src="https://github.com/user-attachments/assets/dcf9d04c-5314-49b5-bd7f-09895cb7897e" /><img width="430" height="541" alt="1234567" src="https://github.com/user-attachments/assets/506415dc-27d6-47b2-a210-de0f4b0aec08" />
 
 - Local transcription — no internet required, no API key
 - Five model sizes: Tiny (fast) to Large (accurate)
@@ -54,7 +54,8 @@ Built for rappers, producers, and vocalists who want a dedicated recording workf
 - Progress bar during transcription
 
 **Signal Chain**
-<img width="425" height="551" alt="1234" src="https://github.com/user-attachments/assets/2f971714-1c85-4a41-94f5-a4d677bf17f5" />
+![Uploading 1234567.PNG…]()
+
 - Input gain (0–2×) — automatable from DAW, maps to Capture dial
 - Noise gate with attack/release smoothing
 - Clip indicator with peak hold
