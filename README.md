@@ -115,6 +115,8 @@ Output: `dist\MicInput-Installer.exe`
 
 ---
 
+<img width="1536" height="1024" alt="ChatGPT Image 18 apr 2026, 23_04_03" src="https://github.com/user-attachments/assets/78ad7f34-90fa-47de-87e4-df4cb7c0dd13" />
+
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
