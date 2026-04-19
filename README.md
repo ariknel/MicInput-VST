@@ -2,6 +2,7 @@
 
 A microphone capture plugin for Windows DAWs. Record takes directly inside the plugin — with automatic save, folder management, Whisper AI transcription, *(pitch detection)*, and waveform previews.
 
+
 Built for rappers, producers, and vocalists who want a dedicated recording workflow inside Bitwig, Ableton, FL Studio, or Reaper.
 
 ---
@@ -127,3 +128,7 @@ Output: `dist\MicInput-Installer.exe`
 MIT License — see [LICENSE](LICENSE) for details.
 
 Whisper model weights are provided by OpenAI under the MIT License.
+
+## Future updates
+
+macOS version will soon be released including github version.
