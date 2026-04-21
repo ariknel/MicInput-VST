@@ -1,3 +1,5 @@
+ALL FEEDBACK IS WELCOME - LET ME KNOW WHAT FEATURES NEED POLISHING OR TO BE ADDED
+
 # MicInput VST3
 
 A microphone capture plugin for Windows DAWs. Record takes directly inside the plugin — with automatic save, folder management, Whisper AI transcription, *(pitch detection)*, and waveform previews.
