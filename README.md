@@ -135,4 +135,4 @@ Whisper model weights are provided by OpenAI under the MIT License.
 
 ## Future updates
 
-macOS version will soon be released including github version.
+- Fix bug on some machines where microphone selected is not stored and resets upon reopening sandbox
