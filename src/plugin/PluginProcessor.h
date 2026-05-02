@@ -52,7 +52,8 @@ public:
     // ── Device management (message thread) ───────────────────────────────────
     std::vector<CaptureDeviceInfo> getAvailableDevices() const;
     void selectDevice(int index);
-    int  getSelectedDeviceIndex() const { return m_selectedDeviceIndex; }
+    int          getSelectedDeviceIndex() const { return m_selectedDeviceIndex; }
+    juce::String getSelectedDeviceName()  const { return m_selectedDeviceName; }
     void setMode(int mode);          // 0=shared, 1=exclusive
     void refreshDevices();
 
@@ -205,6 +206,8 @@ private:
     std::vector<CaptureDeviceInfo> m_devices;
     mutable std::mutex             m_devicesMu;
     std::string                    m_selectedDeviceId;
+    juce::String                   m_selectedDeviceIdJ;
+    juce::String                   m_selectedDeviceName; // display name — saved to XML for reliable restore
     int                            m_captureMode         = 0;
     int                            m_selectedDeviceIndex = -1;
 
