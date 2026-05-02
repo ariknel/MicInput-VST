@@ -2318,6 +2318,30 @@ void MicInputEditor::timerCallback()
     m_capturing = m_proc.isCapturing.load();
     m_lastUnderrun = m_proc.underruns.load();
 
+    // Keep combo in sync with processor — handles case where setStateInformation
+    // fires after the editor is created (common in Bitwig and other DAWs).
+    {
+        juce::String procName   = m_proc.getSelectedDeviceName();
+        juce::String comboName  = m_deviceCombo.getText();
+        // "System Default" when procName is empty
+        bool procWantsDefault = procName.isEmpty();
+        bool comboIsDefault   = (m_deviceCombo.getSelectedId() == 1);
+        bool mismatch = procWantsDefault ? !comboIsDefault : (comboName != procName);
+        if (mismatch) {
+            // Re-populate to sync (cheap — just sets selection, no rebuild unless needed)
+            if (procWantsDefault) {
+                m_deviceCombo.setSelectedId(1, juce::dontSendNotification);
+            } else {
+                for (int i = 0; i < m_deviceCombo.getNumItems(); ++i) {
+                    if (m_deviceCombo.getItemText(i) == procName) {
+                        m_deviceCombo.setSelectedItemIndex(i, juce::dontSendNotification);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     // Finalise any async-stopped auto-save recording.
     // requestStop() was called from the audio thread; we complete the join
     // and file finalisation here on the message thread.
@@ -2868,16 +2892,18 @@ void MicInputEditor::populateDeviceCombo()
     for (int i = 0; i < (int)devs.size(); ++i)
         m_deviceCombo.addItem(juce::String(devs[i].name.c_str()), i + 2);
 
-    // Restore the previously selected device from the processor.
-    // m_selectedDeviceIndex is -1 for System Default, 0-based for named devices.
-    // Combo item IDs: 1 = System Default, 2 = devices[0], 3 = devices[1], ...
-    int savedIndex = m_proc.getSelectedDeviceIndex();
-    int comboId    = (savedIndex < 0) ? 1 : savedIndex + 2;
-
-    // Clamp to valid range in case device list shrank
-    if (comboId > m_deviceCombo.getNumItems())
-        comboId = 1;
-
+    // Restore selection by matching the saved device name.
+    // Name matching is reliable — no encoding issues with WASAPI GUIDs.
+    juce::String savedName = m_proc.getSelectedDeviceName();
+    int comboId = 1;  // default = System Default
+    if (savedName.isNotEmpty()) {
+        for (int i = 0; i < (int)devs.size(); ++i) {
+            if (juce::String(devs[i].name.c_str()) == savedName) {
+                comboId = i + 2;
+                break;
+            }
+        }
+    }
     m_deviceCombo.setSelectedId(comboId, juce::dontSendNotification);
 }
 
