@@ -547,8 +547,7 @@ MicInputEditor::MicInputEditor(MicInputProcessor& p)
     m_lyricsEditor.onTextChange = [this] { m_lyricsDirty = true; repaint(); };
     addChildComponent(m_lyricsEditor);
 
-    populateDeviceCombo();
-    m_deviceCombo.setSelectedId(1, juce::dontSendNotification);
+    populateDeviceCombo();   // restores previously selected device automatically
     switchTab(Tab::Record);
     startTimerHz(30);
 }
@@ -2868,6 +2867,18 @@ void MicInputEditor::populateDeviceCombo()
     auto devs = m_proc.getAvailableDevices();
     for (int i = 0; i < (int)devs.size(); ++i)
         m_deviceCombo.addItem(juce::String(devs[i].name.c_str()), i + 2);
+
+    // Restore the previously selected device from the processor.
+    // m_selectedDeviceIndex is -1 for System Default, 0-based for named devices.
+    // Combo item IDs: 1 = System Default, 2 = devices[0], 3 = devices[1], ...
+    int savedIndex = m_proc.getSelectedDeviceIndex();
+    int comboId    = (savedIndex < 0) ? 1 : savedIndex + 2;
+
+    // Clamp to valid range in case device list shrank
+    if (comboId > m_deviceCombo.getNumItems())
+        comboId = 1;
+
+    m_deviceCombo.setSelectedId(comboId, juce::dontSendNotification);
 }
 
 void MicInputEditor::drawRecordButton(juce::Graphics&, juce::Rectangle<int>) {}
