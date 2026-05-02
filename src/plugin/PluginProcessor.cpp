@@ -81,6 +81,10 @@ void MicInputProcessor::selectDevice(int index)
         m_selectedDeviceIndex = index;
         m_selectedDeviceId = (index >= 0 && index < (int)m_devices.size())
             ? juce::String(m_devices[index].id.c_str()).toStdString() : "";
+        m_selectedDeviceIdJ = (index >= 0 && index < (int)m_devices.size())
+            ? juce::String(m_devices[index].id.c_str()) : juce::String();
+        m_selectedDeviceName = (index >= 0 && index < (int)m_devices.size())
+            ? juce::String(m_devices[index].name.c_str()) : juce::String();
     }
     // Probe device
     IMMDeviceEnumerator* en = nullptr;
@@ -690,8 +694,9 @@ void MicInputProcessor::getStateInformation(juce::MemoryBlock& destData)
     auto state = apvts.copyState();
     if (auto xml = state.createXml())
     {
-        xml->setAttribute("deviceId",    juce::String(m_selectedDeviceId));
-        xml->setAttribute("deviceIndex", m_selectedDeviceIndex);  // kept for fallback
+        xml->setAttribute("deviceName",  m_selectedDeviceName);  // primary — plain string, no encoding issues
+        xml->setAttribute("deviceId",    m_selectedDeviceIdJ);    // secondary fallback
+        xml->setAttribute("deviceIndex", m_selectedDeviceIndex);  // legacy fallback
         xml->setAttribute("captureMode", m_captureMode);
         xml->setAttribute("prebufMs",    (double)m_prebufMs.load());
         xml->setAttribute("monitorOn",   m_monitorEnabled.load() ? 1 : 0);
@@ -716,34 +721,47 @@ void MicInputProcessor::setStateInformation(const void* data, int size)
         setMonitorEnabled(true);
     // Restore device by ID string (stable across plug/unplug events).
     // Fall back to index only if no ID was saved (old state format).
-    if (xml->hasAttribute("deviceId") && xml->getStringAttribute("deviceId").isNotEmpty())
+    // Restore device — try by name first (most reliable, no encoding issues),
+    // fall back to ID, then to legacy index.
     {
-        juce::String savedId = xml->getStringAttribute("deviceId");
+        juce::String savedName  = xml->getStringAttribute("deviceName",  "");
+        juce::String savedId    = xml->getStringAttribute("deviceId",    "");
+        int          savedIndex = xml->getIntAttribute   ("deviceIndex",  -1);
+
         int foundIndex = -1;
         {
             std::lock_guard<std::mutex> lk(m_devicesMu);
-            for (int i = 0; i < (int)m_devices.size(); ++i)
-            {
-                if (juce::String(m_devices[i].id.c_str()) == savedId)
-                {
-                    foundIndex = i;
-                    break;
+            // Try name match first
+            if (savedName.isNotEmpty()) {
+                for (int i = 0; i < (int)m_devices.size(); ++i) {
+                    if (juce::String(m_devices[i].name.c_str()) == savedName) {
+                        foundIndex = i; break;
+                    }
                 }
             }
-            if (foundIndex < 0)
-            {
-                // Device not present right now (e.g. USB unplugged).
-                // Store the ID — next session when the device is plugged back in
-                // it will match again via getStateInformation / setStateInformation.
+            // Fall back to ID match
+            if (foundIndex < 0 && savedId.isNotEmpty()) {
+                for (int i = 0; i < (int)m_devices.size(); ++i) {
+                    if (juce::String(m_devices[i].id.c_str()) == savedId) {
+                        foundIndex = i; break;
+                    }
+                }
+            }
+            // Store name/id even if not found now (device may be unplugged)
+            if (foundIndex < 0 && (savedName.isNotEmpty() || savedId.isNotEmpty())) {
+                m_selectedDeviceName  = savedName;
+                m_selectedDeviceIdJ   = savedId;
                 m_selectedDeviceId    = savedId.toStdString();
                 m_selectedDeviceIndex = -1;
             }
-        } // lock released before selectDevice (which also locks)
+        }
+        // Fall back to saved index if name/id both failed
+        if (foundIndex < 0 && savedIndex >= 0)
+            foundIndex = savedIndex;
+
         if (foundIndex >= 0)
             selectDevice(foundIndex);
     }
-    else if (xml->hasAttribute("deviceIndex"))
-        selectDevice(xml->getIntAttribute("deviceIndex", -1));
     if (xml->hasAttribute("savePath"))
         m_savePath = xml->getStringAttribute("savePath");
     if (xml->hasAttribute("saveEnabled"))
