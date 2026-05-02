@@ -52,6 +52,7 @@ public:
     // ── Device management (message thread) ───────────────────────────────────
     std::vector<CaptureDeviceInfo> getAvailableDevices() const;
     void selectDevice(int index);
+    int  getSelectedDeviceIndex() const { return m_selectedDeviceIndex; }
     void setMode(int mode);          // 0=shared, 1=exclusive
     void refreshDevices();
 
