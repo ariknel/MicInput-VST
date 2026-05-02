@@ -690,7 +690,8 @@ void MicInputProcessor::getStateInformation(juce::MemoryBlock& destData)
     auto state = apvts.copyState();
     if (auto xml = state.createXml())
     {
-        xml->setAttribute("deviceIndex", m_selectedDeviceIndex);
+        xml->setAttribute("deviceId",    juce::String(m_selectedDeviceId));
+        xml->setAttribute("deviceIndex", m_selectedDeviceIndex);  // kept for fallback
         xml->setAttribute("captureMode", m_captureMode);
         xml->setAttribute("prebufMs",    (double)m_prebufMs.load());
         xml->setAttribute("monitorOn",   m_monitorEnabled.load() ? 1 : 0);
@@ -713,7 +714,35 @@ void MicInputProcessor::setStateInformation(const void* data, int size)
         m_monitor.setVolume((float)xml->getDoubleAttribute("monitorVol", 0.8));
     if (xml->hasAttribute("monitorOn") && xml->getIntAttribute("monitorOn", 0))
         setMonitorEnabled(true);
-    if (xml->hasAttribute("deviceIndex"))
+    // Restore device by ID string (stable across plug/unplug events).
+    // Fall back to index only if no ID was saved (old state format).
+    if (xml->hasAttribute("deviceId") && xml->getStringAttribute("deviceId").isNotEmpty())
+    {
+        juce::String savedId = xml->getStringAttribute("deviceId");
+        int foundIndex = -1;
+        {
+            std::lock_guard<std::mutex> lk(m_devicesMu);
+            for (int i = 0; i < (int)m_devices.size(); ++i)
+            {
+                if (juce::String(m_devices[i].id.c_str()) == savedId)
+                {
+                    foundIndex = i;
+                    break;
+                }
+            }
+            if (foundIndex < 0)
+            {
+                // Device not present right now (e.g. USB unplugged).
+                // Store the ID — next session when the device is plugged back in
+                // it will match again via getStateInformation / setStateInformation.
+                m_selectedDeviceId    = savedId.toStdString();
+                m_selectedDeviceIndex = -1;
+            }
+        } // lock released before selectDevice (which also locks)
+        if (foundIndex >= 0)
+            selectDevice(foundIndex);
+    }
+    else if (xml->hasAttribute("deviceIndex"))
         selectDevice(xml->getIntAttribute("deviceIndex", -1));
     if (xml->hasAttribute("savePath"))
         m_savePath = xml->getStringAttribute("savePath");
