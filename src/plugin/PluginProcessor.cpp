@@ -694,9 +694,11 @@ void MicInputProcessor::getStateInformation(juce::MemoryBlock& destData)
     auto state = apvts.copyState();
     if (auto xml = state.createXml())
     {
-        xml->setAttribute("deviceName",  m_selectedDeviceName);  // primary — plain string, no encoding issues
-        xml->setAttribute("deviceId",    m_selectedDeviceIdJ);    // secondary fallback
-        xml->setAttribute("deviceIndex", m_selectedDeviceIndex);  // legacy fallback
+        xml->setAttribute("deviceName",  m_selectedDeviceName);
+        xml->setAttribute("deviceId",    m_selectedDeviceIdJ);
+        xml->setAttribute("deviceIndex", m_selectedDeviceIndex);
+        MICLOG("getStateInformation: saving deviceName='" << m_selectedDeviceName
+            << "' index=" << m_selectedDeviceIndex);
         xml->setAttribute("captureMode", m_captureMode);
         xml->setAttribute("prebufMs",    (double)m_prebufMs.load());
         xml->setAttribute("monitorOn",   m_monitorEnabled.load() ? 1 : 0);
@@ -727,6 +729,8 @@ void MicInputProcessor::setStateInformation(const void* data, int size)
         juce::String savedName  = xml->getStringAttribute("deviceName",  "");
         juce::String savedId    = xml->getStringAttribute("deviceId",    "");
         int          savedIndex = xml->getIntAttribute   ("deviceIndex",  -1);
+        MICLOG("setStateInformation: savedName='" << savedName
+            << "' savedIndex=" << savedIndex << " devices=" << m_devices.size());
 
         int foundIndex = -1;
         {
@@ -759,6 +763,7 @@ void MicInputProcessor::setStateInformation(const void* data, int size)
         if (foundIndex < 0 && savedIndex >= 0)
             foundIndex = savedIndex;
 
+        MICLOG("setStateInformation: foundIndex=" << foundIndex);
         if (foundIndex >= 0)
             selectDevice(foundIndex);
     }
