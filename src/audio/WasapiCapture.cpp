@@ -442,8 +442,8 @@ bool WasapiCapture::open(const std::wstring& deviceId, AudioRingBuffer& ring,
 
             if (FAILED(hr))
             {
-                char buf[64]; sprintf_s(buf, sizeof(buf), "Shared init failed: %s", MicLogger::hr(hr).c_str());
-                setError(buf); CoTaskMemFree(wfx); if(hwFmt) CoTaskMemFree(hwFmt); return false;
+                setError("Shared init failed: " + MicLogger::hr(hr));
+                CoTaskMemFree(wfx); if(hwFmt) CoTaskMemFree(hwFmt); return false;
             }
 
             UINT32 bufFrames = 0; m_audioClient->GetBufferSize(&bufFrames);
