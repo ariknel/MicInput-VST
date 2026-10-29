@@ -497,13 +497,23 @@ void WasapiCapture::start()
     if (m_running.load() || !m_audioClient) return;
     MICLOG("WasapiCapture::start()");
     m_stopFlag.store(false); m_running.store(true);
-    MICLOG_HR("IAudioClient::Start", m_audioClient->Start());
+    m_streamFailed.store(false);
+    m_lastPacketTickMs.store(GetTickCount64());
+    const HRESULT startResult = m_audioClient->Start();
+    MICLOG_HR("IAudioClient::Start", startResult);
+    if (FAILED(startResult))
+    {
+        m_streamFailed.store(true);
+        m_running.store(false);
+        setError("IAudioClient::Start failed");
+        return;
+    }
     m_thread = std::thread(&WasapiCapture::captureThread, this);
 }
 
 void WasapiCapture::stop()
 {
-    if (!m_running.load()) return;
+    if (!m_running.load() && !m_thread.joinable()) return;
     MICLOG("WasapiCapture::stop()");
     m_stopFlag.store(true);
     if (m_eventHandle) SetEvent(m_eventHandle);
@@ -535,24 +545,35 @@ void WasapiCapture::captureThread()
     {
         DWORD wr = WaitForSingleObject(m_eventHandle, 200);
         if (wr == WAIT_TIMEOUT) continue;
-        if (wr != WAIT_OBJECT_0) continue;
+        if (wr != WAIT_OBJECT_0) { m_streamFailed.store(true); break; }
         if (m_stopFlag.load(std::memory_order_relaxed)) break;
 
         UINT32 pktSize = 0;
-        while (SUCCEEDED(m_captureClient->GetNextPacketSize(&pktSize)) && pktSize > 0)
+        while (!m_stopFlag.load(std::memory_order_relaxed))
         {
+            const HRESULT sizeResult = m_captureClient->GetNextPacketSize(&pktSize);
+            if (FAILED(sizeResult))
+            {
+                MICLOG("GetNextPacketSize FAILED: " << MicLogger::hr(sizeResult));
+                m_streamFailed.store(true);
+                break;
+            }
+            if (pktSize == 0) break;
             BYTE* data = nullptr; UINT32 frames = 0; DWORD flags = 0;
             HRESULT hr = m_captureClient->GetBuffer(&data, &frames, &flags, nullptr, nullptr);
-            if (FAILED(hr)) { MICLOG("GetBuffer FAILED: " << MicLogger::hr(hr)); break; }
+            if (FAILED(hr)) { MICLOG("GetBuffer FAILED: " << MicLogger::hr(hr)); m_streamFailed.store(true); break; }
             processPacket(data, frames, (flags & AUDCLNT_BUFFERFLAGS_SILENT) != 0);
             m_captureClient->ReleaseBuffer(frames);
+            m_lastPacketTickMs.store(GetTickCount64(), std::memory_order_relaxed);
             totalFrames += frames; ++packets;
         }
+        if (m_streamFailed.load()) break;
         if (packets > 0 && packets % 500 == 0)
             MICLOG("captureThread: " << packets << " pkts " << totalFrames
                 << " frames ring=" << (m_ring ? m_ring->available() : 0)
                 << " level=" << m_levelL.load(std::memory_order_relaxed));
     }
+    if (!m_stopFlag.load()) m_streamFailed.store(true);
     MICLOG("--- captureThread exit: " << packets << " pkts ---");
 }
 

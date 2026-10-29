@@ -40,6 +40,13 @@ public:
     void close();
 
     bool    isRunning()         const { return m_running.load(); }
+    bool needsRecovery() const
+    {
+        if (!m_running.load(std::memory_order_relaxed) || m_streamFailed.load(std::memory_order_relaxed))
+            return true;
+        const auto last = m_lastPacketTickMs.load(std::memory_order_relaxed);
+        return last != 0 && GetTickCount64() - last > 4000;
+    }
     float   actualPeriodMs()    const { return m_actualPeriodMs.load(); }
     float   streamLatencyMs()   const { return m_streamLatencyMs.load(); }
     bool    usedIAC3()          const { return m_usedIAC3.load(); }
@@ -81,6 +88,8 @@ private:
     std::thread       m_thread;
     std::atomic<bool> m_running{false};
     std::atomic<bool> m_stopFlag{false};
+    std::atomic<bool>   m_streamFailed{false};
+    std::atomic<UINT64> m_lastPacketTickMs{0};
 
     std::atomic<float> m_actualPeriodMs{10.0f};
     std::atomic<float> m_streamLatencyMs{0.0f};

@@ -24,6 +24,46 @@ static juce::PropertiesFile* getAppProps()
 thread_local std::vector<float> MicInputProcessor::s_interleavedBuf;
 
 // ─────────────────────────────────────────────────────────────────────────────
+class MicInputEndpointListener final : public IMMNotificationClient
+{
+public:
+    explicit MicInputEndpointListener(std::atomic<bool>& changed) : changed(changed) {}
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** object) override
+    {
+        if (!object) return E_POINTER;
+        *object = nullptr;
+        if (iid == __uuidof(IUnknown) || iid == __uuidof(IMMNotificationClient))
+        {
+            *object = static_cast<IMMNotificationClient*>(this);
+            AddRef();
+            return S_OK;
+        }
+        return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return ++refs; }
+    ULONG STDMETHODCALLTYPE Release() override
+    {
+        const ULONG count = --refs;
+        if (count == 0) delete this;
+        return count;
+    }
+    HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR) override
+    { changed.store(true, std::memory_order_release); return S_OK; }
+    HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR) override
+    { changed.store(true, std::memory_order_release); return S_OK; }
+    HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR, DWORD) override
+    { changed.store(true, std::memory_order_release); return S_OK; }
+    HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow, ERole, LPCWSTR) override
+    { return S_OK; }
+    HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR, const PROPERTYKEY) override
+    { return S_OK; }
+
+private:
+    std::atomic<ULONG> refs{1};
+    std::atomic<bool>& changed;
+};
+
 MicInputProcessor::MicInputProcessor()
     : AudioProcessor(MicInputProcessor::getDefaultBuses())
     , apvts(*this, nullptr, "MicInputState", MicInput::Params::createLayout())
@@ -50,11 +90,35 @@ MicInputProcessor::MicInputProcessor()
     outputIsUsb.store(currentOutputProfile.isUsb);
     outputIsBluetooth.store(currentOutputProfile.isBluetooth);
     outputLatMs.store(currentOutputProfile.latencyMs);
+    const HRESULT enumHr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
+                                             CLSCTX_ALL, __uuidof(IMMDeviceEnumerator),
+                                             reinterpret_cast<void**>(&m_deviceEventEnumerator));
+    if (SUCCEEDED(enumHr) && m_deviceEventEnumerator)
+    {
+        m_deviceEventListener = new MicInputEndpointListener(m_deviceChangePending);
+        const HRESULT regHr = m_deviceEventEnumerator->RegisterEndpointNotificationCallback(m_deviceEventListener);
+        if (FAILED(regHr))
+        {
+            MICLOG("Endpoint notification registration failed: " << MicLogger::hr(regHr));
+            m_deviceEventListener->Release();
+            m_deviceEventListener = nullptr;
+            m_deviceEventEnumerator->Release();
+            m_deviceEventEnumerator = nullptr;
+        }
+        else MICLOG("Endpoint notifications registered");
+    }
+    else MICLOG("Endpoint notification enumerator unavailable: " << MicLogger::hr(enumHr));
+    startTimer(1000);
 }
 
 MicInputProcessor::~MicInputProcessor()
 {
     MICLOG("=== MicInputProcessor destroyed ===");
+    stopTimer();
+    if (m_deviceEventEnumerator && m_deviceEventListener)
+        m_deviceEventEnumerator->UnregisterEndpointNotificationCallback(m_deviceEventListener);
+    if (m_deviceEventListener) { m_deviceEventListener->Release(); m_deviceEventListener = nullptr; }
+    if (m_deviceEventEnumerator) { m_deviceEventEnumerator->Release(); m_deviceEventEnumerator = nullptr; }
     closeCapture();
 }
 
@@ -71,6 +135,66 @@ void MicInputProcessor::refreshDevices()
     MICLOG("refreshDevices: " << devs.size() << " device(s)");
     std::lock_guard<std::mutex> lk(m_devicesMu);
     m_devices = std::move(devs);
+}
+
+void MicInputProcessor::timerCallback()
+{
+    if (m_sampleRate <= 0.0)
+        return;
+
+    const bool deviceChanged = m_deviceChangePending.exchange(false, std::memory_order_acq_rel);
+    const bool captureUnhealthy = !isCapturing.load(std::memory_order_relaxed) || m_capture.needsRecovery();
+    if (!deviceChanged && !captureUnhealthy)
+        return;
+
+    const juce::String wantedId = m_selectedDeviceIdJ;
+    const juce::String wantedName = m_selectedDeviceName;
+    if (wantedId.isEmpty() && wantedName.isEmpty())
+        return; // Never silently switch to the system-default microphone.
+
+    // Discover active endpoints without dropping the remembered device from the editor.
+    const auto available = WasapiCapture::enumerateDevices();
+    int selected = -1;
+    if (wantedId.isNotEmpty())
+        for (int i = 0; i < (int)available.size(); ++i)
+            if (juce::String(available[i].id.c_str()) == wantedId) { selected = i; break; }
+    if (selected < 0 && wantedName.isNotEmpty())
+        for (int i = 0; i < (int)available.size(); ++i)
+            if (juce::String(available[i].name.c_str()) == wantedName) { selected = i; break; }
+
+    if (selected < 0)
+    {
+        if (isCapturing.load(std::memory_order_relaxed))
+        {
+            MICLOG("Auto-reconnect: selected microphone disconnected");
+            closeCapture();
+        }
+        // Leave the remembered selection and dropdown untouched while disconnected.
+        return;
+    }
+
+    if (!captureUnhealthy)
+        return; // An unrelated Windows device changed; current microphone is still healthy.
+
+    const uint32_t now = juce::Time::getMillisecondCounter();
+    if (m_lastReconnectAttemptMs != 0 && now - m_lastReconnectAttemptMs < 2000)
+        return;
+    m_lastReconnectAttemptMs = now;
+
+    MICLOG("Auto-reconnect: selected endpoint active, reopening");
+    // Update indices only after finding the selected microphone, immediately before reopen.
+    refreshDevices();
+    const auto devices = getAvailableDevices();
+    for (int i = 0; i < (int)devices.size(); ++i)
+    {
+        if ((wantedId.isNotEmpty() && juce::String(devices[i].id.c_str()) == wantedId) ||
+            (wantedName.isNotEmpty() && juce::String(devices[i].name.c_str()) == wantedName))
+        {
+            selectDevice(i); // Existing close/open implementation.
+            MICLOG("Auto-reconnect: capture active=" << isCapturing.load());
+            break;
+        }
+    }
 }
 
 void MicInputProcessor::selectDevice(int index)
@@ -169,6 +293,7 @@ void MicInputProcessor::openCapture()
     if (m_capture.open(wid, m_ring, m_captureMode, m_sampleRate))
     {
         m_capture.start();
+        if (!m_capture.isRunning()) { isCapturing.store(false); return; }
         isCapturing.store(true);
         captureMs.store(m_capture.actualPeriodMs());
         usedIAC3.store(m_capture.usedIAC3());
@@ -225,6 +350,7 @@ void MicInputProcessor::openCapture()
             if (m_capture.open(wid, m_ring, 0, m_sampleRate))  // mode 0 = shared
             {
                 m_capture.start();
+                if (!m_capture.isRunning()) { isCapturing.store(false); return; }
                 isCapturing.store(true);
                 captureMs.store(m_capture.actualPeriodMs());
                 usedIAC3.store(m_capture.usedIAC3());
@@ -760,7 +886,7 @@ void MicInputProcessor::setStateInformation(const void* data, int size)
             }
         }
         // Fall back to saved index if name/id both failed
-        if (foundIndex < 0 && savedIndex >= 0)
+        if (foundIndex < 0 && savedIndex >= 0 && savedName.isEmpty() && savedId.isEmpty())
             foundIndex = savedIndex;
 
         MICLOG("setStateInformation: foundIndex=" << foundIndex);
