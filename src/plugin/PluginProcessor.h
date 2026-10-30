@@ -13,7 +13,7 @@
 #include <vector>
 #include <chrono>
 
-class MicInputProcessor : public juce::AudioProcessor
+class MicInputProcessor : public juce::AudioProcessor, private juce::Timer
 {
 public:
     // ── Bus layout: no inputs, stereo out ────────────────────────────────────
@@ -51,7 +51,7 @@ public:
 
     // ── Device management (message thread) ───────────────────────────────────
     std::vector<CaptureDeviceInfo> getAvailableDevices() const;
-    void selectDevice(int index);
+    void selectDevice(int index, bool probeCapabilities = true);
     int          getSelectedDeviceIndex() const { return m_selectedDeviceIndex; }
     juce::String getSelectedDeviceName()  const { return m_selectedDeviceName; }
     void setMode(int mode);          // 0=shared, 1=exclusive
@@ -195,6 +195,11 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
 private:
+    void timerCallback() override;
+    uint32_t m_lastReconnectAttemptMs = 0;
+    std::atomic<bool> m_deviceChangePending{false};
+    IMMDeviceEnumerator* m_deviceEventEnumerator = nullptr;
+    IMMNotificationClient* m_deviceEventListener = nullptr;
     void openCapture();
     void closeCapture();
     void recalcTotalLatency();
