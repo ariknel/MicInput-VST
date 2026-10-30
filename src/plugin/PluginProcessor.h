@@ -51,7 +51,7 @@ public:
 
     // ── Device management (message thread) ───────────────────────────────────
     std::vector<CaptureDeviceInfo> getAvailableDevices() const;
-    void selectDevice(int index);
+    void selectDevice(int index, bool probeCapabilities = true);
     int          getSelectedDeviceIndex() const { return m_selectedDeviceIndex; }
     juce::String getSelectedDeviceName()  const { return m_selectedDeviceName; }
     void setMode(int mode);          // 0=shared, 1=exclusive

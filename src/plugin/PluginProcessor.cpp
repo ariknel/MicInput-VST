@@ -190,14 +190,14 @@ void MicInputProcessor::timerCallback()
         if ((wantedId.isNotEmpty() && juce::String(devices[i].id.c_str()) == wantedId) ||
             (wantedName.isNotEmpty() && juce::String(devices[i].name.c_str()) == wantedName))
         {
-            selectDevice(i); // Existing close/open implementation.
+            selectDevice(i, false); // Reopen capture without capability probing.
             MICLOG("Auto-reconnect: capture active=" << isCapturing.load());
             break;
         }
     }
 }
 
-void MicInputProcessor::selectDevice(int index)
+void MicInputProcessor::selectDevice(int index, bool probeCapabilities)
 {
     MICLOG("selectDevice(" << index << ")");
     {
@@ -210,21 +210,24 @@ void MicInputProcessor::selectDevice(int index)
         m_selectedDeviceName = (index >= 0 && index < (int)m_devices.size())
             ? juce::String(m_devices[index].name.c_str()) : juce::String();
     }
-    // Probe device
-    IMMDeviceEnumerator* en = nullptr;
-    if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
-                                    CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&en)))
+    if (probeCapabilities)
     {
-        IMMDevice* dev = nullptr;
-        if (m_selectedDeviceId.empty())
-            en->GetDefaultAudioEndpoint(eCapture, eConsole, &dev);
-        else
+        // Probe device
+        IMMDeviceEnumerator* en = nullptr;
+        if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
+                                        CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&en)))
         {
-            std::wstring w(m_selectedDeviceId.begin(), m_selectedDeviceId.end());
-            en->GetDevice(w.c_str(), &dev);
+            IMMDevice* dev = nullptr;
+            if (m_selectedDeviceId.empty())
+                en->GetDefaultAudioEndpoint(eCapture, eConsole, &dev);
+            else
+            {
+                std::wstring w(m_selectedDeviceId.begin(), m_selectedDeviceId.end());
+                en->GetDevice(w.c_str(), &dev);
+            }
+            if (dev) { currentDeviceProfile = probeDevice(dev); dev->Release(); }
+            en->Release();
         }
-        if (dev) { currentDeviceProfile = probeDevice(dev); dev->Release(); }
-        en->Release();
     }
     closeCapture(); openCapture();
     currentOutputProfile = probeDefaultOutput();
